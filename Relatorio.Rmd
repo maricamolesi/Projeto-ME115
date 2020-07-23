@@ -1,0 +1,294 @@
+---
+title: "Participação das mulheres ao longo da história do Prêmio Nobel"
+author: Mariana Alamino Camolesi RA 173962
+bibliography: referencia.bib
+output:
+ bookdown::pdf_document2:
+     toc: FALSE
+---
+
+```{r setup, include=FALSE}
+#não altere nada aqui
+knitr::opts_chunk$set(echo = FALSE)
+options(knitr.table.format = "latex")
+options(scipen = 999,digits=2)
+```
+
+```{r,message=FALSE}
+# inclua os pacotes que for usar aqui
+library(readr)
+library(kableExtra)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r include=FALSE}
+# obtendo os dados
+Nobel_Dados_Geral <- read_csv("nobel_prize_awarded_1901_2019.csv")
+Nobel_Paises <- read_csv("nobel_prize_awarded_country_details_1901_2019.csv")
+
+Total_Anos <- 118
+
+```
+
+
+# Introdução
+
+Ao longo da história, o papel da mulher na ciência foi expressivo e as suas contribuições científicas se mostraram em diversas áreas do conhecimento. Mas, com a imposição de papéis de gênero, as mulheres se distanciaram de certos ambientes e padrões de comportamento, sendo um deles o meio científico. E apesar dos desafios diários da discriminação de gênero e falta de reconhecimento na comunidade científica, muitas mulheres foram e ainda são responsáveis por grandes avanços na ciência. Por exemplo, Marie Curie, cientista polonesa, foi a primeira pessoa e única mulher a ser laureada duas vezes, sendo até hoje a única pessoa a receber o Prêmio Nobel em duas áreas distintas, marco conquistado com seu Prêmio Nobel de Física em 1903 e Prêmio Nobel de Química em 1911.  
+Entretanto, mesmo com grandes representantes no campo das ciências, as mulheres possuem uma participação ínfima na área, em especial no Prêmio Nobel.\par
+Concedido pela primeira vez em 1901, o Prêmio Nobel é considerado o prêmio internacional mais prestigiado nas áreas de física, química, literatura, medicina, economia e ativismo pela paz. Organizado por instituições suecas e norueguesas, o Prêmio Nobel tem por objetivo premiar pessoas ou instituições que realizaram pesquisas notáveis para a humanidade nass áreas científicas, culturais ou acadêmicas, no ano imediatamente anterior ou no curso de suas atividades.\par
+Com os dados disponibilizados pelo banco de dados @nobelnotes, este trabalho tem por objetivo trazer, a partir de análises estatísticas, um panorama geral sobre a participação de mulheres no Prêmio Nobel ao longo dos anos (1901-2019).
+
+# Banco de dados
+
+Para este trabalho foi utilizado um banco de dados sobre a participação das mulheres no Prêmio Nobel entre 1901 e 2019, disponibilizado no site Kaggle (https://www.kaggle.com/mbogernetto/women-in-nobel-prize-19012019), composto por 3 arquivos no formato *csv*. Para o desenvolvimento deste trabalho optou-se por utilizar os dados referentes ao arquivo *"nobel_prize_awarded_1901_2019.csv"* e ao arquivo *"nobel_prize_awarded_country_details_1901_2019.csv"*, que para fins práticos foi atribuído o nome de *"Nobel_Dados_Geral"* e *"Nobel_Paises"*, respectivamente.\par
+O arquivo *"Nobel_Dados_Geral"* é composto por `r ncol(Nobel_Dados_Geral)` variáveis: *Name* (Nome do vencedor); *Year* (Ano do prêmio); *Category* (Categoria do prêmio); *Countries* (País de origem e/ou da premiação); *Gender* (Gênero); *Description* (Detalhes do trabalho); *Details* (Outras informações referentes ao vencedor). O arquivo possui `r nrow(Nobel_Dados_Geral)` linhas no total. Considera-se aqui como *Gênero* (Gender) as classificações *Homem* (Man), *Mulher* (Woman) e *Organização* (Organization). O arquivo possui `r nrow(Nobel_Dados_Geral)` linhas no total.  
+Já o arquivo *"Nobel_Paises"* é composto por `r ncol(Nobel_Dados_Geral)` variáveis: *Name* (Nome do vencedor); *Year* (Ano do prêmio); *Country* (País de origem); *Countries* (País de origem e/ou da premiação); *Category* (Categoria do prêmio); *Gender* (Gênero); *Details* (Outras informações referentes ao vencedor). O arquivo possui `r nrow(Nobel_Paises)` linhas no total.  
+Considera-se aqui como *Gênero* (Gender) as classificações *Homem* (Man), *Mulher* (Woman) e *Organização* (Organization).\par
+As Tabelas \@ref(tab:tabAmostra) e \@ref(tab:tabAmostra2) abaixo possuem as primeiras 6 linhas de cada arquivo para exemplificação.
+
+```{r tabAmostra, echo=FALSE}
+
+Amostra <- head(Nobel_Dados_Geral)
+colnames(Amostra) <- c("Nome", "Ano", "Categoria", "Países", "Gênero", "Descrição", "Detalhes")
+
+kable(Amostra, booktabs = T, align = "c", 
+      caption = "Amostra das 6 primeiras linhas do arquivo de dados gerais do Nobel.")
+
+```
+
+```{r tabAmostra2, echo=FALSE, message=FALSE}
+
+Amostra2 <- head(Nobel_Paises)
+colnames(Amostra2) <- c("Nome", "Ano", "País", "Países", "Categoria", "Gênero", "Detalhes")
+
+kable(Amostra2, booktabs = T, align = "c", 
+      caption = "Amostra das 6 primeiras linhas do arquivo de dados por países do Nobel.")
+
+```
+
+# Análise exploratória
+
+Sendo possível receber mais de uma vez, o Prêmio Nobel premiou 919 pessoas e 24 instituições entre 1901 e 2019, somando 950 laureados @nobelnotes2. Desses prêmios, apenas 54 foram concedidos a mulheres, sendo 2 entregues a cientista Marie Curie.  
+Ou seja, apenas 53 mulheres receberam o Nobel em 118 anos.\par
+A Figura \@ref(fig:graph1) mostra o percentual de laureados de cada gênero ao longo da história da premiação.
+
+```{r graph1, echo=FALSE, fig.align='center', fig.cap="Percentual total dos laureados por gênero ao longo do tempo (1901-2019).", fig.height=2.5, fig.width=7, message=FALSE}
+
+#Participação geral
+Nobel_por_Genero <- Nobel_Dados_Geral %>% group_by(Gender) %>% count('Gender')
+Nobel_por_Genero$Percentual <- round(Nobel_por_Genero$n/sum(Nobel_por_Genero$n)*100, 1)
+Nobel_por_Genero$Gênero <- c("Homem", "Organização", "Mulher")
+
+#Gráfico percentual geral
+ggplot(Nobel_por_Genero, aes(x = reorder(Gênero, Percentual), y = Percentual, fill = Gênero)) +
+  geom_bar(stat = "identity", width = 0.5) + expand_limits(y = 100) + 
+  geom_text(aes(label = paste0(Percentual,"%")), hjust = -0.2, size = 3) +
+  labs(title = "Percentual dos ganhadores do Nobel (1901-2019)", x = "Gênero", y = "Percentual") +
+  theme_light() + 
+  theme(plot.title = element_text(hjust = 0.5, size = 10, face = "bold"), 
+        axis.title.x = element_text(vjust = -2, size = 10),
+        axis.title.y = element_text(size = 10)) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none")
+
+```
+
+Tanto a Figura \@ref(fig:graph1) quanto a Figura \@ref(fig:graph2) mostra com clareza a diferença discrepante entre a participação de cada gênero.
+
+```{r graph2, echo=FALSE, fig.align='center', fig.cap="Histograma dos ganhadores do prêmio Nobel por gênero ao longo do tempo (1901-2019)", fig.height=4, fig.width=7, fig.pos="H", message=FALSE}
+
+#Histograma dados gerais
+ggplot(Nobel_Dados_Geral, aes(x = Year, fill = Gender)) + 
+  geom_histogram(position = "identity", binwidth = 4, color = "white") + expand_limits(x = 2020) +
+  labs(title = "Ganhadores do prêmio Nobel por gênero (1901-2019)", x = "Ano", y = "Frequência") +
+  theme_light() + 
+  theme(plot.title = element_text(hjust=0.5, size = 10, face = "bold"), 
+        axis.title.x = element_text(vjust = -2, size = 10),
+        axis.title.y = element_text(vjust = 2, size = 10)) +
+  scale_fill_manual(values = c("#1B9E77", "#7570B3", "#D95F02"), name = " ", 
+                    labels = c("Homem", "Organização", "Mulher")) +
+  theme(legend.position = "bottom")
+
+```
+
+```{r include=FALSE}
+#Participação anual
+Nobel_por_Ano <- Nobel_Dados_Geral %>% group_by(Year, Gender) %>% count('Gender') %>% 
+  group_by(Year) %>% mutate (Percentual = n/sum(n)*100)
+
+Media_por_Ano <- as.data.frame(table(Nobel_Dados_Geral$Gender)) %>% 
+  summarize(Média = Freq/Total_Anos)
+
+#Dados referentes ao recorde de laureadas em um ano
+Recorde_Mulheres <- Nobel_por_Ano %>% subset(Gender == "Woman") %>% arrange(desc(n))
+Recorde_Homens <-  Nobel_por_Ano %>% subset(Gender == "Man" & Year == "2009")
+  
+```
+
+Enquanto a média de homens laureados por ano é `r Media_por_Ano[1,1]` homens, a média das mulheres fica em torno de `r Media_por_Ano[3,1]` mulher, não chegando a 1 mulher por ano. Para exemplificar como é grande essa diferença, temos o ano de 2009. Esse ano foi o recorde de mulheres no Nobel em um ano, com o marco de `r Recorde_Mulheres$n[1] ` mulheres laureadas. Neste mesmo ano, `r Recorde_Homens$n[1]` homens ganharam Nobel, número que equivale a metade do recorde de homens premiados em um ano.\par
+Apesar de tudo isso, podemos observar pelo histograma (Figura \@ref(fig:graph2)) dos dados distribuidos ao longo dos anos que, apesar de aos poucos, a participação das mulheres têm crescido nas últimas décadas. Em especial, a Figura \@ref(fig:graph3) traz os dados do percentual de mulheres laureadas referente ao total de participantes de cada década.\par
+
+```{r graph3, echo=FALSE, fig.align='center', fig.cap="Percentual de mulheres laureadas ao longo das décadas (1901-2019).", fig.height=3, fig.width=7, fig.pos="H", message=FALSE}
+
+#Mulheres ao longo das décadas
+Nobel_Mulheres <- Nobel_Dados_Geral %>% mutate(Década = floor(Year/10)*10) %>% 
+  group_by(Década, Gender) %>% count('Gender') %>% 
+  group_by(Década) %>% mutate(Percentual = round(n/sum(n)*100, 1)) %>% subset(Gender == "Woman")
+
+Primeiros90anos <- Nobel_Mulheres %>% subset(Década > "1850" & Década < "2000")
+total <- Nobel_por_Ano %>% subset(Year > "1900" & Year < "2000")
+
+Ultimos20anos <- Nobel_Mulheres %>% subset(Década > "1990")
+total2 <- Nobel_por_Ano %>% subset(Year > "1999")
+
+#Gráfico participação mulheres/decada
+ggplot(Nobel_Mulheres, aes(x = Década, y = Percentual)) + expand_limits(y = 12) +
+  geom_bar(stat = "identity", fill = "#D95F02") + 
+  geom_text(aes(label = paste0(Percentual,"%")), vjust = -0.5, size = 3) +
+  labs(title = "Percentual de mulheres premiadas por década (1901-2019)", 
+       x = "Década", y = "Percentual") +
+  theme_light() + 
+  theme(plot.title = element_text(hjust = 0.5, size = 10, face = "bold"), 
+        axis.title.x = element_text(vjust = -2, size = 10),
+        axis.title.y = element_text(size = 10)) +
+  theme(legend.position = "none")
+
+```
+
+Nos últimos 20 anos, as mulheres foram laureadas `r round(sum(Ultimos20anos$n)/sum(total2$n)*100, 1)`% das vezes, representação maior do que os `r round(sum(Primeiros90anos$n)/sum(total$n)*100, 1)`% dos primeiros 90 anos. E, em contra partida à década de 50 na qual nenhuma mulher foi premiada, o período entre 2010 e 2019 foi a década com maior participação feminina da história, representando `r Nobel_Mulheres$Percentual[11]`% dos laureados. Isso nos mostra como a luta das mulheres por espaço e respeito nas áreas ditas "masculinas" vêm trazendo resultados.\par
+Mas não só de maneira geral que vemos essas diferenças entre os gêneros. Partindo a ánalise para as áreas de conhecimentos, a Figura \@ref(fig:graph4) mostra a porcentagem referente ao total de ganhadores do Nobel daquela área para cada gênero, considerando o panorama total de 1901 a 2019.
+
+```{r graph4, echo=FALSE, fig.align='center', fig.cap="Percentual dos ganhadores do prêmio Nobel por área e gênero ao longo dos anos (1901-2019).", fig.height=7, fig.width=8.2, fig.pos="H", message=FALSE}
+
+#Participação por áreas de conhecimento
+Nobel_por_Area <- as.data.frame(table(Nobel_Dados_Geral$Gender, Nobel_Dados_Geral$Category))
+Nobel_por_Area$Var1 <- c("Homem", "Organização", "Mulher")
+Nobel_por_Area <- Nobel_por_Area %>% group_by(Var2) %>%
+  mutate(Percentual = round(Freq/sum(Freq), 3)*100)
+
+#Auxiliar para renomear a legenda das categorias
+legenda <- c("Química", "Economia", "Literatura", "Paz", "Física", "Fisiologia ou Medicina")
+names(legenda) <- c("Chemistry", "Economics", "Literature", "Peace", "Physics", "Physiology or Medicine")
+
+#Gráfico percentual por área
+ggplot(Nobel_por_Area, aes(x = reorder(Var1, Percentual), y = Percentual)) +
+  geom_bar(aes(fill = Var1), stat = "identity", width = 0.7) + expand_limits(y = 107) + 
+  geom_text(aes(label = paste0(Percentual, '%')), hjust = -0.1, size = 3.0) +
+  labs(title = "Ganhadores do prêmio Nobel por área (1901-2019)", 
+       x = "Gênero", 
+       y = "Percentual") +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10, face = "bold"), 
+        axis.title.x = element_text(vjust = -2, size = 10),
+        axis.title.y = element_text(vjust = 2, size = 10)) +
+  scale_fill_manual(values = c("#1B9E77", "#D95F02", "#7570B3")) +
+  facet_wrap(~ Var2, ncol = 2, labeller = labeller(Var2 = legenda)) +
+  coord_flip() +
+  theme(legend.position = "none")
+
+```
+
+Com uma diferença gigante entre a participação masculina e feminina, observa-se que as maiores diferenças pertencem às áreas tradicionalmente conhecidas como "áreas masculinas", como por exemplo na categoria Química em que homens fazem parte de `r Nobel_por_Area$Percentual[1]`% dos laureados contra `r Nobel_por_Area$Percentual[3]`% mulheres.  
+
+```{r include=FALSE}
+#Ganhadoras do Nobel de Física
+Fisica_Mulheres <- Nobel_Dados_Geral %>% 
+  subset(Gender == "Woman" & Category == "Physics") %>% select(Name, Year, Countries)
+colnames(Fisica_Mulheres) <- c("Nome", "Ano", "País")
+Fisica_Mulheres$País <- c("Canadá", "Alemanha, Estados Unidos", "França, Polônia")
+
+```
+
+Comparando as próprias porcentagens de laureadas por área é possível encontrar grandes diferenças. Em contrapartida a participação das mulheres na área de literatura que gira em torno de `r Nobel_por_Area$Percentual[9]`%, temos `r Nobel_por_Area$Percentual[15]`% na Física, sendo a área com a menor participação feminina dentre as 6.\par
+Enquanto homens acumulam o total de `r nrow(Nobel_Dados_Geral %>% subset(Gender == "Man" & Category == "Physics"))` prêmios Nobel de Física, `r Fisica_Mulheres$Nome[1]` foi a responsável por ganhar o Nobel de Física em 2018 após 55 anos sem mulher laureada na área, somando o total de `r nrow(Fisica_Mulheres)` prêmios ao longo de 118 anos (Tabela \@ref(tab:tab1)).
+
+```{r tab1, echo=FALSE}
+#Tabela das ganhadoras
+kable(Fisica_Mulheres, booktabs = T, align = "c", 
+      caption="Mulheres vencedoras do Nobel de Física ao longo dos anos (1901-2019).") %>% 
+kable_styling(latex_options = "hold_position")
+
+```
+
+```{r include=FALSE}
+
+#Participação por paises
+Total_Paises <- as.data.frame(table(Nobel_Paises$Country)) %>% arrange(desc(Freq))
+
+Paises_Mulheres <- as.data.frame(table(Nobel_Paises$Country, Nobel_Paises$Gender))
+Paises_Mulheres <- Paises_Mulheres %>% group_by(Var1) %>% 
+  mutate(Percentual = round(Freq/sum(Freq), 3)*100) %>% subset(Var2 == "Woman")
+
+Principais_Paises <- as.data.frame(table(Nobel_Paises$Country, Nobel_Paises$Gender)) %>% 
+  subset(Var1 %in% c("United States", "United Kingdom", "Germany"))
+
+Principais_Paises$Var2 <- c(rep("Homem", 3), rep("Organização", 3), rep("Mulher", 3))
+colnames(Principais_Paises) <- c("Country", "Gender", "n")
+
+Principais_Paises <- Principais_Paises %>% group_by(Country) %>% 
+  mutate(Percentual = round(n/sum(n), 3)*100) 
+
+Paises_Mulheres <- Paises_Mulheres %>% arrange(desc(Freq))
+
+```
+
+Além disso, analisamos também a situação por país, trazendo a porcentagem de mulheres em relação ao total de premiados. Como são ao todo `r nrow(Total_Paises)` países, a Figura \@ref(fig:graph5) traz informações sobre os primeiros 3 países com maior número total de ganhadores do Nobel.
+
+```{r graph5, echo=FALSE, fig.align='center', fig.cap="Percentual dos ganhadores do prêmio Nobel dos 3 primeiros países com maior número absoluto de laureados ao longo da história (1901-2019).", fig.height=6, fig.width=8, fig.pos="H", message=FALSE}
+
+#Auxiliar para renomear a legenda das categorias
+legenda <- c("Estados Unidos", "Reino Unido", "Alemanha") 
+names(legenda) <- c("United States", "United Kingdom", "Germany") 
+
+#Gráfico por país
+ggplot(Principais_Paises, aes(x = reorder(Gender, Percentual), y = Percentual)) +
+  geom_bar(aes(fill = Gender), stat = "identity", width = 0.7) + expand_limits(y = 105) + 
+  geom_text(aes(label = paste0(Percentual, '%')), hjust = -0.1, size = 3) +
+  labs(title = "Percentual de ganhadores do prêmio Nobel em 3 países (1901-2019)", 
+       x = "Gênero", y = "Percentual") +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5, size = 10, face = "bold"), 
+        axis.title.x = element_text(vjust = -2, size = 10),
+        axis.title.y = element_text(vjust = 2, size = 10)) +
+  scale_fill_manual(values = c("#1B9E77", "#D95F02", "#7570B3")) +
+  facet_wrap(Country ~ ., ncol = 1, labeller = labeller(Country = legenda)) +
+  coord_flip() +
+  theme(legend.position = "none")
+
+```
+
+Quando pensamos em países com uma grande parcela do total de vencedores do Nobel, imagina-se que há um maior incentivo à ciência e consequentemente uma melhor proporção entre os gêneros. Entretanto, a baixa proporção de mulheres premiadas se mantém. Estados Unidos, que ocupa o primeiro lugar de país com maior número de vencedores, com `r Total_Paises$Freq[1]` premiados no total, além de ocupar o primeiro lugar do país com maior número absoluto de mulheres vencedoras do Nobel, tem ao todo apenas `r Paises_Mulheres$Freq[1]` laureadas.  
+E isso nos mostra que mesmo nos países com maior presença no meio científico e acadêmico, ainda encontra-se uma porcentagem da participação feminina muito menor do que a masculina.\par
+Mas, apesar disso, é possível encontrar países no qual os únicos ou grande parte laureados foram mulheres. São países com um número total de premiados muito menor do que os analisados anteriormente, mas ainda assim interessante de ser observado.\par
+A Tabela \@ref(tab:tab2) traz  em uma tabela simples os 5 primeiros países com maior percentual de mulheres laureadas, considerando apenas o número absoluto de ganhadores total.
+
+```{r tab2, echo=FALSE}
+
+#Tabela países com maior percentual de mulheres
+Paises_Mulheres <- Paises_Mulheres %>% arrange(desc(Percentual))
+Amostra3 <- head(Paises_Mulheres %>% select(Var1, Freq, Percentual), 5)
+colnames(Amostra3) <- c("País", "Número de laureadas", "Percentual")
+Amostra3$País <- c("Irã", "Libéria", "Iraque", "Myanmar", "Macedônia")
+
+kable(Amostra3 , booktabs = T, align = "c",
+      caption="Amostra de 5 países com maior percentual de mulheres vencedoras do Nobel ao longo dos anos (1901-2019).") %>%
+kable_styling(latex_options = "hold_position")
+
+```
+
+Infelizmente não são os países com os maiores números de laureados, nestes vimos que a participação ainda é predominantemente masculina (Figura \@ref(fig:graph5)). E mesmo sendo um dado que não pode ser usado para a análise da situação, não se torna menos interessante pois mesmo que poucas laureadas, isso tem seu valor. \par
+
+
+# Considerações finais
+
+Assim, pudemos ver como a participação feminina no Prêmio Nobel é um dos vários reflexos sobre como a imposição dos papéis de gênero ao longo da história afetou e ainda afeta as mulheres.  
+Com apenas `r Nobel_por_Genero$Percentual[3]`% de mulheres premiadas contra `r Nobel_por_Genero$Percentual[1]`% de homens, vemos que ainda há uma falta de representação feminina no meio acadêmico e científico, mas que vem mudando nos últimos anos. Em especial esta última década (2010-2019), no qual a presença feminina entre os vencedores bateu o recorde de `r Nobel_Mulheres$Percentual[11]`% de mulheres entre os laureados.  
+Essa presença cada vez maior de mulheres nestes ambientes traz consigo uma representatividade que serve de inspiração para que as próximas gerações de mulheres continuem a conquistar cada vez mais espaço e, com sorte, mudar esse panorama atual.
+
+# Bibliografia
+
+<!-- não coloque nada aqui, será feito automaticamente se vc usar .bib e @ para citar referencias no texto, conforme o video explicativo indicado no roteiro-->
+
