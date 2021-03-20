@@ -1,4 +1,4 @@
-# Projeto-LinguagemR
+# Projeto Linguagem R
 Análise estatística sobre a participação das mulheres no prêmio Nobel ao longo da história, realizada para o projeto final da disciplina ME115 (Linguagem R).
 Desenvolvido no RStudio.
 
